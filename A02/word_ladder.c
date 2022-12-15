@@ -202,10 +202,10 @@ static void hash_table_grow(hash_table_t *hash_table)
         find_word(hash_table,entry,1);
         oldEntry = entry;
         entry = entry->next;
-        free(oldEntry);
+        free_hash_table_node(oldEntry);
       }
     }
-  free(oldTable);
+  hash_table_free(oldTable);
 }
 
 static void hash_table_free(hash_table_t *hash_table)
@@ -213,6 +213,26 @@ static void hash_table_free(hash_table_t *hash_table)
   //
   // complete this
   //
+  for (unsigned int i=0u; i<hash_table->hash_table_size; i++) {
+      hash_table_node_t *node = hash_table->heads[i];
+      hash_table_node_t *previousNode;
+      adjacency_node_t *adjNode;
+      adjacency_node_t *previousAdjNode;
+      while (node != NULL){
+        adjNode = node->head;
+        while(adjNode != NULL){
+          previousAdjNode = adjNode;
+          adjNode = adjNode->next;
+          free_adjacency_node(previousAdjNode);
+        }
+
+        previousNode = node;
+        node = node->next;
+
+        free_hash_table_node(previousNode);
+      }
+    }
+  free_hash_table_node(hash_table->heads);
   free(hash_table);
 }
 
