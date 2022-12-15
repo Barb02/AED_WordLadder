@@ -175,7 +175,8 @@ static hash_table_t *hash_table_create(void)
   hash_table->hash_table_size = 100u;
   hash_table->number_of_entries = 0u;
   hash_table->number_of_edges = 0u;
-  
+  hash_table->heads = (hash_table_node_t **)calloc(hash_table->hash_table_size, sizeof(hash_table_node_t*));
+
   for(i = 0u; i < hash_table->hash_table_size; i++)
     hash_table->heads[i] = NULL;
   return hash_table;
