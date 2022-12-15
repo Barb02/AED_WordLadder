@@ -172,6 +172,12 @@ static hash_table_t *hash_table_create(void)
   //
   // complete this
   //
+  hash_table->hash_table_size = 10000000u;
+  hash_table->number_of_entries = 0u;
+  hash_table->number_of_edges = 0u;
+  
+  for(i = 0u; i < hash_table->hash_table_size; i++)
+    hash_table->heads[i] = NULL;
   return hash_table;
 }
 
@@ -180,6 +186,26 @@ static void hash_table_grow(hash_table_t *hash_table)
   //
   // complete this
   //
+  int oldTableSize = hash_table->hash_table_size;
+  hash_table->hash_table_size *= 2;
+  hash_table_t *oldTable = hash_table;
+  hash_table = hash_table_create
+  for (int i = 0; i < hash_table->hash_table_size; i++)
+    table[i] = NULL;
+  size = 0;
+
+  for (int hash = 0; hash < oldTableSize; hash++)
+    if (oldTable[hash] != NULL) {
+      LinkedHashEntry *oldEntry;
+      LinkedHashEntry *entry = oldTable[hash];
+      while (entry != NULL) {
+        put(entry->getKey(), entry->getValue());
+        oldEntry = entry;
+        entry = entry->getNext();
+        delete oldEntry;
+      }
+    }
+  delete[] oldTable;
 }
 
 static void hash_table_free(hash_table_t *hash_table)
