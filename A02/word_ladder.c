@@ -187,25 +187,25 @@ static void hash_table_grow(hash_table_t *hash_table)
   // complete this
   //
   int oldTableSize = hash_table->hash_table_size;
-  hash_table->hash_table_size *= 2;
   hash_table_t *oldTable = hash_table;
-  hash_table = hash_table_create
-  for (int i = 0; i < hash_table->hash_table_size; i++)
-    table[i] = NULL;
-  size = 0;
+  hash_table = hash_table_create();
+  hash_table->hash_table_size *= 2;
+  for (unsigned int i = 0u; i < hash_table->hash_table_size; i++)
+    hash_table->heads[i] = NULL;
+  hash_table->number_of_entries = 0;
 
-  for (int hash = 0; hash < oldTableSize; hash++)
-    if (oldTable[hash] != NULL) {
-      LinkedHashEntry *oldEntry;
-      LinkedHashEntry *entry = oldTable[hash];
+  for (unsigned int hash = 0u; hash < oldTableSize; hash++)
+    if (oldTable->heads[hash] != NULL) {
+      hash_table_node_t *oldEntry;
+      hash_table_node_t *entry = oldTable->heads[hash];
       while (entry != NULL) {
-        put(entry->getKey(), entry->getValue());
+        find_word(hash_table,entry,1);
         oldEntry = entry;
-        entry = entry->getNext();
-        delete oldEntry;
+        entry = entry->next;
+        free(oldEntry);
       }
     }
-  delete[] oldTable;
+  free(oldTable);
 }
 
 static void hash_table_free(hash_table_t *hash_table)
