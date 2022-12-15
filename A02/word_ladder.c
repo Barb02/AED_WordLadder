@@ -245,6 +245,16 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   //
   // complete this
   //
+  node = hash_table->heads[i];
+  while(node != NULL){
+    if(strcmp(word,node->word) == 0){return node;}
+    node = node->next;
+  }
+  if(insert_if_not_found){
+    hash_table_node_t* node = allocate_hash_table_node();
+    node->next = NULL;
+    strcpy(node->word,word);
+  }
   return node;
 }
 
