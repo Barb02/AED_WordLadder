@@ -172,7 +172,7 @@ static hash_table_t *hash_table_create(void)
   //
   // complete this
   //
-  hash_table->hash_table_size = 10000000u;
+  hash_table->hash_table_size = 100u;
   hash_table->number_of_entries = 0u;
   hash_table->number_of_edges = 0u;
   
