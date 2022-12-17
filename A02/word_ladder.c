@@ -90,7 +90,11 @@ struct hash_table_s
   hash_table_node_t **heads;         // the heads of the linked lists
 };
 
-
+// declaration of functions
+static hash_table_t *hash_table_create(void);
+static void hash_table_grow(hash_table_t *hash_table);
+static void hash_table_free(hash_table_t *hash_table);
+static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,int insert_if_not_found);
 //
 // allocation and deallocation of linked list nodes (done)
 //
@@ -141,7 +145,7 @@ unsigned int crc32(const char *str)
   static unsigned int table[256];
   unsigned int crc;
 
-  if(table[1] == 0u) // do we need to initialize the table[] array?
+  if(table[1] == 0u) // do we need to initialize the table[] array? no, bc its static and therefore initializated with 0u by default
   {
     unsigned int i,j;
 
@@ -187,26 +191,24 @@ static void hash_table_grow(hash_table_t *hash_table)
   //
   // complete this
   //
-  int oldTableSize = hash_table->hash_table_size;
-  hash_table_t *oldTable = hash_table;
-  hash_table = hash_table_create();
-  hash_table->hash_table_size *= 2;
+  unsigned int old_table_size = hash_table->hash_table_size;
+  hash_table_t *old_table = hash_table;
+
+  hash_table = (hash_table_t *)malloc(sizeof(hash_table_t));
+  hash_table->hash_table_size = old_table_size*2;
+  hash_table->number_of_entries = 0u;
+  hash_table->number_of_edges = 0u;
+  hash_table->heads = (hash_table_node_t **)calloc(hash_table->hash_table_size, sizeof(hash_table_node_t*));
   for (unsigned int i = 0u; i < hash_table->hash_table_size; i++)
     hash_table->heads[i] = NULL;
-  hash_table->number_of_entries = 0;
 
-  for (unsigned int hash = 0u; hash < oldTableSize; hash++)
-    if (oldTable->heads[hash] != NULL) {
-      hash_table_node_t *oldEntry;
-      hash_table_node_t *entry = oldTable->heads[hash];
-      while (entry != NULL) {
-        find_word(hash_table,entry,1);
-        oldEntry = entry;
-        entry = entry->next;
-        free_hash_table_node(oldEntry);
-      }
+  for (unsigned int i = 0u; i < old_table_size; i++)
+    if (old_table->heads[i] != NULL) {
+      hash_table_node_t *node = old_table->heads[i];
+      while (node != NULL) 
+        (void)find_word(hash_table,node->word,1); 
     }
-  hash_table_free(oldTable);
+  hash_table_free(old_table);
 }
 
 static void hash_table_free(hash_table_t *hash_table)
@@ -233,7 +235,7 @@ static void hash_table_free(hash_table_t *hash_table)
         free_hash_table_node(previousNode);
       }
     }
-  free_hash_table_node(hash_table->heads);
+  free(hash_table->heads);
   free(hash_table);
 }
 
@@ -246,15 +248,21 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   //
   // complete this
   //
+  hash_table_node_t *previous_node;
   node = hash_table->heads[i];
   while(node != NULL){
-    if(strcmp(word,node->word) == 0){return node;}
+    if(strcmp(word,node->word) == 0) return node;
+    if(node->next == NULL) previous_node = node; // save last non-null node 
     node = node->next;
   }
   if(insert_if_not_found){
-    hash_table_node_t* node = allocate_hash_table_node();
-    node->next = NULL;
-    strcpy(node->word,word);
+    // create new node
+    hash_table_node_t *new_node = allocate_hash_table_node();
+    new_node->next = NULL;
+    strcpy(new_node->word,word);
+    // link node to hash table
+    if(hash_table->heads[i] == NULL) hash_table->heads[i] = new_node;
+    else previous_node->next = new_node;
   }
   return node;
 }
@@ -264,7 +272,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
 // add edges to the word ladder graph (mostly do be done)
 //
 
-static hash_table_node_t *find_representative(hash_table_node_t *node)
+/* static hash_table_node_t *find_representative(hash_table_node_t *node)
 {
   hash_table_node_t *representative,*next_node;
 
@@ -284,7 +292,7 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
   // complete this
   //
 }
-
+ */
 
 //
 // generates a list of similar words and calls the function add_edge for each one (done)
@@ -338,7 +346,7 @@ static void make_utf8_string(const int *individual_characters,char word[_max_wor
   *word = '\0';  // mark the end
 }
 
-static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
+/* static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 {
   static const int valid_characters[] =
   { // unicode!
@@ -368,7 +376,7 @@ static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
     }
     individual_characters[i] = k;
   }
-}
+} */
 
 
 //
@@ -376,7 +384,7 @@ static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 //
 // returns the number of vertices visited; if the last one is goal, following the previous links gives the shortest path between goal and origin
 //
-
+/* 
 static int breadh_first_search(int maximum_number_of_vertices,hash_table_node_t **list_of_vertices,hash_table_node_t *origin,hash_table_node_t *goal)
 {
   //
@@ -438,7 +446,7 @@ static void graph_info(hash_table_t *hash_table)
   // complete this
   //
 }
-
+ */
 
 //
 // main program
@@ -456,7 +464,7 @@ int main(int argc,char **argv)
   // initialize hash table
   hash_table = hash_table_create();
   // read words
-  fp = fopen((argc < 2) ? "wordlist-big-latest.txt" : argv[1],"rb");
+  fp = fopen((argc < 2) ? "wordlist-four-letters.txt" : argv[1],"rb");
   if(fp == NULL)
   {
     fprintf(stderr,"main: unable to open the words file\n");
@@ -465,8 +473,25 @@ int main(int argc,char **argv)
   while(fscanf(fp,"%99s",word) == 1)
     (void)find_word(hash_table,word,1);
   fclose(fp);
+
+  // testando hash table -------------------
+  printf("\n\n\n");
+  int c = 0;
+  for(i = 0u; i < hash_table->hash_table_size; i++){
+    
+    if(hash_table->heads[i] != NULL){
+      //printf("%d", c++);
+      hash_table_node_t *node = hash_table->heads[i];
+      printf("%s %d", node->word, ++c);
+      while(node != NULL){
+        printf("%s %d", node->word, ++c);
+        node = node->next;
+      }
+    }
+  }  
+
   // find all similar words
-  for(i = 0u;i < hash_table->hash_table_size;i++)
+  /* for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
   graph_info(hash_table);
@@ -497,7 +522,7 @@ int main(int argc,char **argv)
     }
     else if(command == 3)
       break;
-  }
+  } */
   // clean up
   hash_table_free(hash_table);
   return 0;
