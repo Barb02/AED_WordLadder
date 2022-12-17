@@ -250,6 +250,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   //
   hash_table_node_t *previous_node;
   node = hash_table->heads[i];
+  // find node
   while(node != NULL){
     if(strcmp(word,node->word) == 0) return node;
     if(node->next == NULL) previous_node = node; // save last non-null node 
@@ -261,9 +262,14 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     new_node->next = NULL;
     strcpy(new_node->word,word);
     // link node to hash table
-    if(hash_table->heads[i] == NULL) hash_table->heads[i] = new_node;
+    if(hash_table->heads[i] == NULL){
+      hash_table->heads[i] = new_node;
+      hash_table->number_of_entries++;
+    } 
     else previous_node->next = new_node;
   }
+  // resize hash table
+  //if(hash_table->number_of_entries >= hash_table->hash_table_size*0.7) hash_table_grow(hash_table);
   return node;
 }
 
@@ -488,7 +494,9 @@ int main(int argc,char **argv)
         node = node->next;
       }
     }
-  }  
+  } 
+
+  printf("\nsize: %u", hash_table->hash_table_size);
 
   // find all similar words
   /* for(i = 0u;i < hash_table->hash_table_size;i++)
