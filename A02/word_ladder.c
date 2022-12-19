@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../P02/elapsed_time.h"
 
 
 //
@@ -243,6 +244,7 @@ static void hash_table_free(hash_table_t *hash_table)
 // variables to get statistical data about the hash table
 unsigned int number_of_collisions = 0u;
 unsigned int max_linked_list_size = 0u;
+double elapsed_time;
 
 static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,int insert_if_not_found)
 {
@@ -295,7 +297,8 @@ void print_hash_table_statistics(hash_table_t *hash_table)
   printf("\nnumber of entries: %u",hash_table->number_of_entries);
   printf("\nsize: %u", hash_table->hash_table_size);
   printf("\nnumber of collisions: %u", number_of_collisions);
-  printf("\nmax linked list size: %u\n", max_linked_list_size);
+  printf("\nmax linked list size: %u", max_linked_list_size);
+  printf("\nelapsed time dispended on adding all file elements to hash table: %.4f\n", elapsed_time);
   printf("\n----------------------------------------------------------------------------\n");
 }
 
@@ -502,8 +505,10 @@ int main(int argc,char **argv)
     fprintf(stderr,"main: unable to open the words file\n");
     exit(1);
   }
+  elapsed_time = cpu_time();
   while(fscanf(fp,"%99s",word) == 1)
     (void)find_word(hash_table,word,1);
+  elapsed_time = cpu_time() - elapsed_time;
   fclose(fp);
 
   // testando hash table -------------------
