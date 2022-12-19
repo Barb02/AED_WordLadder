@@ -95,6 +95,7 @@ static hash_table_t *hash_table_create(void);
 static void hash_table_grow(hash_table_t *hash_table);
 static void hash_table_free(hash_table_t *hash_table);
 static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,int insert_if_not_found);
+
 //
 // allocation and deallocation of linked list nodes (done)
 //
@@ -239,6 +240,10 @@ static void hash_table_free(hash_table_t *hash_table)
   free(hash_table);
 }
 
+// variables to get statistical data about the hash table
+unsigned int number_of_collisions = 0u;
+unsigned int max_linked_list_size = 0u;
+
 static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,int insert_if_not_found)
 {
   hash_table_node_t *node;
@@ -250,11 +255,13 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   //
   hash_table_node_t *previous_node;
   node = hash_table->heads[i];
+  unsigned int size_linked_list = 0u;
   // find node
   while(node != NULL){
     if(strcmp(word,node->word) == 0) return node;
     if(node->next == NULL) previous_node = node; // save last non-null node 
     node = node->next;
+    size_linked_list++;
   }
   if(insert_if_not_found){
     // create new node
@@ -264,13 +271,32 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     // link node to hash table
     if(hash_table->heads[i] == NULL){
       hash_table->heads[i] = new_node;
-      hash_table->number_of_entries++;
     } 
-    else previous_node->next = new_node;
+    else{
+      previous_node->next = new_node;
+      number_of_collisions++;
+    }
+    // update current linked list size
+    size_linked_list++;
+    // updtae number of entries
+    hash_table->number_of_entries++;
   }
+  // save max linked list size
+  if(size_linked_list > max_linked_list_size) max_linked_list_size = size_linked_list;
   // resize hash table
   //if(hash_table->number_of_entries >= hash_table->hash_table_size*0.7) hash_table_grow(hash_table);
   return node;
+}
+
+
+void print_hash_table_statistics(hash_table_t *hash_table)
+{
+  printf("\n\n--------------------- Hash Table Statistical Data -------------------------\n");
+  printf("\nnumber of entries: %u",hash_table->number_of_entries);
+  printf("\nsize: %u", hash_table->hash_table_size);
+  printf("\nnumber of collisions: %u", number_of_collisions);
+  printf("\nmax linked list size: %u\n", max_linked_list_size);
+  printf("\n----------------------------------------------------------------------------\n");
 }
 
 
@@ -494,9 +520,9 @@ int main(int argc,char **argv)
         node = node->next;
       }
     }
-  } 
+  }
 
-  printf("\nsize: %u", hash_table->hash_table_size);
+  print_hash_table_statistics(hash_table);
 
   // find all similar words
   /* for(i = 0u;i < hash_table->hash_table_size;i++)
