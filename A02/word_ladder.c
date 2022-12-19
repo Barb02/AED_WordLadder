@@ -298,6 +298,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   if(insert_if_not_found){
     // create new node
     hash_table_node_t *new_node = allocate_hash_table_node();
+    new_node->head = NULL;
     new_node->next = NULL;
     strcpy(new_node->word,word);
     // link node to hash table
@@ -594,6 +595,6 @@ int main(int argc,char **argv)
       break;
   } */
   // clean up
-  //hash_table_free(hash_table);
+  hash_table_free(hash_table);
   return 0;
 }
