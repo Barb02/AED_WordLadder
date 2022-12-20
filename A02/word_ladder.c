@@ -368,6 +368,25 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
       to_links->next = link;
     }
     to->number_of_vertices++;
+
+    // increment total number of edges
+    hash_table->number_of_edges++;
+
+    from_representative = find_representative(from);
+    to_representative = find_representative(to);
+    // union
+    if(from_representative != to_representative){
+      if(to_representative->number_of_vertices > from_representative->number_of_vertices){
+        from->representative = to_representative;
+        to->representative->number_of_vertices += from_representative->number_of_vertices;
+        to->representative->number_of_edges += from_representative->number_of_edges;
+      }
+      else{
+        to->representative = from->representative;
+        from->representative->number_of_vertices += to_representative->number_of_vertices;
+        from->representative->number_of_edges += to_representative->number_of_edges;
+      }
+    }
   }
 }
 
