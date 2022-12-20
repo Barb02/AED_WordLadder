@@ -137,7 +137,6 @@ static void free_hash_table_node(hash_table_node_t *node)
   free(node);
 }
 
-
 //
 // hash table stuff (mostly to be done)
 //
@@ -341,6 +340,7 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
   // complete this
   //
   if(to != NULL){
+    // add link to node "from" 
     link = allocate_adjacency_node();
     link->next = NULL;
     link->vertex = to;
@@ -354,6 +354,7 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
       from_links->next = link;
     }
     from->number_of_vertices++;
+    // add link to node "to" 
     link = allocate_adjacency_node();
     link->next = NULL;
     link->vertex = from;
