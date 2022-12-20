@@ -222,25 +222,6 @@ static void hash_table_grow(hash_table_t *hash_table)
   free(hash_table->heads);
   hash_table->heads = new_heads;
   hash_table->hash_table_size = new_size;
-  
-  /*unsigned int old_table_size = hash_table->hash_table_size;
-  hash_table_t *old_table = hash_table;
-
-  hash_table = (hash_table_t *)malloc(sizeof(hash_table_t));
-  hash_table->hash_table_size = old_table_size*2;
-  hash_table->number_of_entries = 0u;
-  hash_table->number_of_edges = 0u;
-  hash_table->heads = (hash_table_node_t **)calloc(hash_table->hash_table_size, sizeof(hash_table_node_t*));
-  for (unsigned int i = 0u; i < hash_table->hash_table_size; i++)
-    hash_table->heads[i] = NULL;
-
-  for (unsigned int i = 0u; i < old_table_size; i++)
-    if (old_table->heads[i] != NULL) {
-      hash_table_node_t *node = old_table->heads[i];
-      while (node != NULL) 
-        (void)find_word(hash_table,node->word,1); 
-    }
-  hash_table_free(old_table);*/
 }
 
 static void hash_table_free(hash_table_t *hash_table)
@@ -300,6 +281,8 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     hash_table_node_t *new_node = allocate_hash_table_node();
     new_node->head = NULL;
     new_node->next = NULL;
+    new_node->visited = 0;
+    new_node->representative = new_node;
     strcpy(new_node->word,word);
     // link node to hash table
     if(hash_table->heads[i] == NULL){
@@ -338,7 +321,7 @@ void print_hash_table_statistics(hash_table_t *hash_table)
 // add edges to the word ladder graph (mostly do be done)
 //
 
-/* static hash_table_node_t *find_representative(hash_table_node_t *node)
+static hash_table_node_t *find_representative(hash_table_node_t *node)
 {
   hash_table_node_t *representative,*next_node;
 
@@ -357,8 +340,36 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
   //
   // complete this
   //
+  if(to != NULL){
+    link = allocate_adjacency_node();
+    link->next = NULL;
+    link->vertex = to;
+    adjacency_node_t *from_links = from->head;
+    if(from_links == NULL){
+      from->head = link;
+    } 
+    else{
+      while(from_links->next != NULL)
+        from_links = from_links->next;
+      from_links->next = link;
+    }
+    from->number_of_vertices++;
+    link = allocate_adjacency_node();
+    link->next = NULL;
+    link->vertex = from;
+    adjacency_node_t *to_links = to->head;
+    if(to_links == NULL){
+      to->head = link;
+    } 
+    else{
+      while(to_links->next != NULL)
+        to_links = to_links->next;
+      to_links->next = link;
+    }
+    to->number_of_vertices++;
+  }
 }
- */
+
 
 //
 // generates a list of similar words and calls the function add_edge for each one (done)
@@ -412,7 +423,7 @@ static void make_utf8_string(const int *individual_characters,char word[_max_wor
   *word = '\0';  // mark the end
 }
 
-/* static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
+static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 {
   static const int valid_characters[] =
   { // unicode!
@@ -442,7 +453,7 @@ static void make_utf8_string(const int *individual_characters,char word[_max_wor
     }
     individual_characters[i] = k;
   }
-} */
+}
 
 
 //
@@ -562,10 +573,20 @@ int main(int argc,char **argv)
   print_hash_table_statistics(hash_table);
 
   // find all similar words
-  /* for(i = 0u;i < hash_table->hash_table_size;i++)
+  for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
-  graph_info(hash_table);
+
+  // testando add edge
+  adjacency_node_t *link;
+  for(i = 0u;i < hash_table->hash_table_size;i++)
+    for(node = hash_table->heads[i];node != NULL;node = node->next){
+      printf("\n\n\n %s", node->word);
+      for(link = node->head; link != NULL; link = link->next)
+        printf("\n%s", link->vertex->word);
+    }
+
+  /* graph_info(hash_table);
   // ask what to do
   for(;;)
   {
