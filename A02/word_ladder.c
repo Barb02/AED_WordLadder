@@ -88,6 +88,7 @@ struct hash_table_s
   unsigned int hash_table_size;      // the size of the hash table array
   unsigned int number_of_entries;    // the number of entries in the hash table
   unsigned int number_of_edges;      // number of edges (for information purposes only)
+  unsigned int *nodes_per_head;      // number of nodes mapped to the same hashcode (information purposes)
   hash_table_node_t **heads;         // the heads of the linked lists
 };
 
@@ -181,6 +182,7 @@ static hash_table_t *hash_table_create(void)
   hash_table->number_of_entries = 0u;
   hash_table->number_of_edges = 0u;
   hash_table->heads = (hash_table_node_t **)calloc(hash_table->hash_table_size, sizeof(hash_table_node_t*));
+  hash_table->nodes_per_head = (unsigned int *)calloc(hash_table->hash_table_size, sizeof(unsigned int));
 
   for(i = 0u; i < hash_table->hash_table_size; i++)
     hash_table->heads[i] = NULL;
@@ -196,6 +198,7 @@ static void hash_table_grow(hash_table_t *hash_table)
   hash_table_node_t *node,*next_node,*new_node_spot;
   unsigned int new_size = hash_table->hash_table_size * 2;
   hash_table_node_t **new_heads = (hash_table_node_t **)calloc(new_size,sizeof(hash_table_node_t*));
+  hash_table->nodes_per_head = (unsigned int *)calloc(new_size, sizeof(unsigned int));
   for(unsigned int i = 0u; i < new_size; i++){
     new_heads[i]= NULL;
   }
@@ -209,13 +212,15 @@ static void hash_table_grow(hash_table_t *hash_table)
       new_node_spot = new_heads[new_index];
       if(new_node_spot == NULL){
         new_heads[new_index] = node;
-      }else{
+      }
+      else{
         while(new_node_spot->next != NULL){
           new_node_spot = new_node_spot->next;
         }
         new_node_spot->next = node;
       }
       node = next_node;
+      hash_table->nodes_per_head[new_index] = hash_table->nodes_per_head[i];
     }
   }
   free(hash_table->heads);
@@ -265,7 +270,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   //
   // complete this
   //
-  hash_table_node_t *previous_node;
+  hash_table_node_t *previous_node = NULL;
   node = hash_table->heads[i];
   unsigned int size_linked_list = 0u;
   // find node
@@ -293,6 +298,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     }
     // update current linked list size
     size_linked_list++;
+    hash_table->nodes_per_head[i] = size_linked_list;
     // updtae number of entries
     hash_table->number_of_entries++;
   }
@@ -311,6 +317,9 @@ void print_hash_table_statistics(hash_table_t *hash_table)
   printf("\nsize: %u", hash_table->hash_table_size);
   printf("\nnumber of collisions: %u", number_of_collisions);
   printf("\nmax linked list size: %u", max_linked_list_size);
+  printf("\naverage linked list size: %f", (float)number_of_collisions/(float)hash_table->hash_table_size);
+  for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
+    printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]);
   printf("\nelapsed time dispended on adding all file elements to hash table: %.4f\n", elapsed_time);
   printf("\n----------------------------------------------------------------------------\n");
 }
@@ -327,6 +336,17 @@ static hash_table_node_t *find_representative(hash_table_node_t *node)
   //
   // complete this
   //
+  representative = node->representative;
+  // find
+  while(node != representative){
+    node = node->representative;
+    representative = node->representative;
+  }
+  // path compression 
+  /* while(node != representative){
+    node = node->representative;
+    node->representative = representative;
+  } */
   return representative;
 }
 
@@ -382,7 +402,7 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
         to->representative->number_of_edges += from_representative->number_of_edges;
       }
       else{
-        to->representative = from->representative;
+        to->representative = from_representative;
         from->representative->number_of_vertices += to_representative->number_of_vertices;
         from->representative->number_of_edges += to_representative->number_of_edges;
       }
@@ -590,7 +610,7 @@ int main(int argc,char **argv)
     }
   }
 
-  print_hash_table_statistics(hash_table);
+  //print_hash_table_statistics(hash_table);
 
   // find all similar words
   for(i = 0u;i < hash_table->hash_table_size;i++)
@@ -603,7 +623,7 @@ int main(int argc,char **argv)
     for(node = hash_table->heads[i];node != NULL;node = node->next){
       printf("\n\n\n %s", node->word);
       for(link = node->head; link != NULL; link = link->next)
-        printf("\n%s", link->vertex->word);
+        printf("\nnode: %s rep: %s", link->vertex->word, find_representative(link->vertex)->word);
     }
 
   /* graph_info(hash_table);
