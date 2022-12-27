@@ -53,14 +53,11 @@
 
 #define _max_word_size_  32
 
-
-//
-// data structures (SUGGESTION --- you may do it in a different way)
-//
-
 typedef struct adjacency_node_s  adjacency_node_t;
 typedef struct hash_table_node_s hash_table_node_t;
 typedef struct hash_table_s      hash_table_t;
+typedef struct queue_node        queue_node;
+typedef struct queue_l           queue_l;
 
 struct adjacency_node_s
 {
@@ -90,6 +87,73 @@ struct hash_table_s
   unsigned int number_of_edges;      // number of edges (for information purposes only)
   hash_table_node_t **heads;         // the heads of the linked lists
 };
+
+//QUEUE-struct -----------------------------------------------------
+struct queue_node{
+  hash_table_node_t *hash_node;
+  queue_node *next;
+};
+struct queue_l{
+  unsigned int size;
+  queue_node *head;
+  queue_node *tail;
+};
+
+//QUEUE-funct -----------------------------------------------------
+static queue_l *initialize_queue(){
+  queue_l *queue = calloc(1,sizeof(queue_l));
+  queue->head = NULL;
+  queue->size = 0u;
+  queue->tail = NULL;
+  return queue;
+}
+
+static queue_node *allocate_queue_node(){
+  queue_node *node = calloc(1,sizeof(queue_node));
+  node->next = NULL;
+  node->hash_node = NULL;
+  return node;
+}
+
+static void put_node_queue(queue_l *queue,hash_table_node_t *hash_node){
+  queue->size++;
+  queue_node *q_node = allocate_queue_node();
+  q_node->hash_node = hash_node;
+  if(queue->size != 1){
+  queue->tail->next = q_node;
+  queue->tail = q_node;
+  }else{
+    queue->head = q_node;
+    queue->tail = q_node;
+  }
+}
+
+static void delete_queue(queue_l *queue){
+  queue_node *node,*prev_node;
+  node = queue->head;
+  while(node != NULL){
+    prev_node = node;
+    node = node->next;
+    free(prev_node);
+  }
+  free(queue);
+}
+
+static void print_queue_items(queue_l *queue){
+  printf("\n");
+  for(queue_node *node = queue->head;node != NULL;node = node->next){
+    hash_table_node_t *hash_node = node->hash_node;
+    printf("%s-",hash_node->word);
+  };
+}
+//-----------------------------------------------------------------------------------
+
+
+//
+// data structures (SUGGESTION --- you may do it in a different way)
+//
+
+
 
 // declaration of functions
 static hash_table_t *hash_table_create(void);
@@ -280,6 +344,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     hash_table_node_t *new_node = allocate_hash_table_node();
     new_node->head = NULL;
     new_node->next = NULL;
+    new_node->previous = NULL;
     new_node->visited = 0;
     new_node->representative = new_node;
     strcpy(new_node->word,word);
@@ -481,7 +546,7 @@ static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 //
 // returns the number of vertices visited; if the last one is goal, following the previous links gives the shortest path between goal and origin
 //
-/* 
+/*
 static int breadh_first_search(int maximum_number_of_vertices,hash_table_node_t **list_of_vertices,hash_table_node_t *origin,hash_table_node_t *goal)
 {
   //
@@ -489,8 +554,33 @@ static int breadh_first_search(int maximum_number_of_vertices,hash_table_node_t 
   //
   return -1;
 }
+*/
+static int bfs(queue_l *queue,hash_table_node_t *origin,hash_table_node_t *goal){
+  for(adjacency_node_t *node = origin->head;node != NULL;node = node->next){
+    hash_table_node_t *vertex = node->vertex;
+    if(vertex->visited == 1){
+      printf("passed-%s\n",vertex->word);
+      continue;
+    }else{
+    vertex->visited = 1;
+    vertex->previous = origin;
+    put_node_queue(queue,vertex);
+    if(vertex == goal) return 1;
+    }
+  }
+  return 0;
+}
+static void bfs_reset(hash_table_t *hash_table){
+  hash_table_node_t *node;
+  unsigned int i;
+  for(i = 0u;i < hash_table->hash_table_size;i++)
+    for(node = hash_table->heads[i];node != NULL;node = node->next){
+      node->previous = NULL;
+      node->visited = 0;
+    }
 
-
+}
+/*
 //
 // list all vertices belonging to a connected component (complete this)
 //
@@ -518,7 +608,7 @@ static int connected_component_diameter(hash_table_node_t *node)
   // complete this
   //
   return diameter;
-}
+}*/
 
 
 //
@@ -530,13 +620,33 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   //
   // complete this
   //
+  hash_table_node_t *origin,*goal;
+  origin = find_word(hash_table,from_word,0);
+  if(origin == NULL) return;
+  origin->visited = 1;
+  goal = find_word(hash_table,to_word,0);
+  if(goal == NULL) return;
+  queue_l *queue = initialize_queue();
+  put_node_queue(queue,origin);
+  for(queue_node *node = queue->head;node != NULL;node = node->next){
+    hash_table_node_t *hash_node = node->hash_node;
+    int aux = bfs(queue,hash_node,goal);
+    if(aux == 1) break;
+  };
+  printf("\n");
+  //print_queue_items(queue);
+  for(goal; goal != NULL;goal = goal->previous){
+    printf("%s<-",goal->word);
+  }
+  bfs_reset(hash_table);
+  delete_queue(queue);
 }
 
 
 //
 // some graph information (optional)
 //
-
+/*
 static void graph_info(hash_table_t *hash_table)
 {
   //
@@ -605,6 +715,8 @@ int main(int argc,char **argv)
       for(link = node->head; link != NULL; link = link->next)
         printf("\n%s", link->vertex->word);
     }
+
+  path_finder(hash_table,"moço","paço");
 
   /* graph_info(hash_table);
   // ask what to do
