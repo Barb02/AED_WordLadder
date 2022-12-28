@@ -106,6 +106,7 @@ static queue_l *initialize_queue(){
   queue->head = NULL;
   queue->size = 0u;
   queue->tail = NULL;
+
   return queue;
 }
 
@@ -113,6 +114,7 @@ static queue_node *allocate_queue_node(){
   queue_node *node = calloc(1,sizeof(queue_node));
   node->next = NULL;
   node->hash_node = NULL;
+  
   return node;
 }
 
@@ -120,10 +122,12 @@ static void put_node_queue(queue_l *queue,hash_table_node_t *hash_node){
   queue->size++;
   queue_node *q_node = allocate_queue_node();
   q_node->hash_node = hash_node;
+
   if(queue->size != 1){
-  queue->tail->next = q_node;
-  queue->tail = q_node;
-  }else{
+    queue->tail->next = q_node;
+    queue->tail = q_node;
+  }
+  else{
     queue->head = q_node;
     queue->tail = q_node;
   }
@@ -145,7 +149,7 @@ static void print_queue_items(queue_l *queue){
   for(queue_node *node = queue->head;node != NULL;node = node->next){
     hash_table_node_t *hash_node = node->hash_node;
     printf("%s-",hash_node->word);
-  };
+  }
 }
 //-----------------------------------------------------------------------------------
 
@@ -581,11 +585,12 @@ static int bfs(queue_l *queue,hash_table_node_t *origin,hash_table_node_t *goal)
     if(vertex->visited == 1){
       printf("passed-%s\n",vertex->word);
       continue;
-    }else{
-    vertex->visited = 1;
-    vertex->previous = origin;
-    put_node_queue(queue,vertex);
-    if(vertex == goal) return 1;
+    }
+    else{
+      vertex->visited = 1;
+      vertex->previous = origin;
+      put_node_queue(queue,vertex);
+      if(vertex == goal) return 1;
     }
   }
   return 0;
@@ -641,23 +646,29 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   // complete this
   //
   hash_table_node_t *origin,*goal;
+
   origin = find_word(hash_table,from_word,0);
   if(origin == NULL) return;
   origin->visited = 1;
+
   goal = find_word(hash_table,to_word,0);
   if(goal == NULL) return;
+
   queue_l *queue = initialize_queue();
   put_node_queue(queue,origin);
+
   for(queue_node *node = queue->head;node != NULL;node = node->next){
     hash_table_node_t *hash_node = node->hash_node;
     int aux = bfs(queue,hash_node,goal);
     if(aux == 1) break;
-  };
+  }
   printf("\n");
+
   //print_queue_items(queue);
   for(goal; goal != NULL;goal = goal->previous){
     printf("%s<-",goal->word);
   }
+
   bfs_reset(hash_table);
   delete_queue(queue);
 }
