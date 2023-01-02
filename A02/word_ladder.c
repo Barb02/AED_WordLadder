@@ -150,6 +150,7 @@ static void print_queue_items(queue_l *queue){
     hash_table_node_t *hash_node = node->hash_node;
     printf("%s-",hash_node->word);
   }
+  printf("\n");
 }
 //-----------------------------------------------------------------------------------
 
@@ -412,10 +413,10 @@ static hash_table_node_t *find_representative(hash_table_node_t *node)
     representative = node->representative;
   }
   // path compression 
-  /* while(node != representative){
+  while(node != representative){
     node = node->representative;
     node->representative = representative;
-  } */
+  }
   return representative;
 }
 
@@ -570,32 +571,29 @@ static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 //
 // returns the number of vertices visited; if the last one is goal, following the previous links gives the shortest path between goal and origin
 //
-/*
-static int breadh_first_search(int maximum_number_of_vertices,hash_table_node_t **list_of_vertices,hash_table_node_t *origin,hash_table_node_t *goal)
-{
-  //
-  // complete this
-  //
-  return -1;
-}
-*/
-static int bfs(queue_l *queue,hash_table_node_t *origin,hash_table_node_t *goal){
+static int breadth_first_search(queue_l *queue,hash_table_node_t *origin,hash_table_node_t *goal){
+
+  //int number_of_vertices_visted = 0;
+
   for(adjacency_node_t *node = origin->head;node != NULL;node = node->next){
     hash_table_node_t *vertex = node->vertex;
     if(vertex->visited == 1){
-      printf("passed-%s\n",vertex->word);
+      //printf("passed-%s\n",vertex->word);
       continue;
     }
     else{
       vertex->visited = 1;
       vertex->previous = origin;
       put_node_queue(queue,vertex);
+      //number_of_vertices_visted++;
       if(vertex == goal) return 1;
     }
   }
-  return 0;
+  return -1;
 }
-static void bfs_reset(hash_table_t *hash_table){
+
+
+static void breadth_first_search_reset(hash_table_t *hash_table){
   hash_table_node_t *node;
   unsigned int i;
   for(i = 0u;i < hash_table->hash_table_size;i++)
@@ -605,16 +603,32 @@ static void bfs_reset(hash_table_t *hash_table){
     }
 
 }
-/*
+
 //
 // list all vertices belonging to a connected component (complete this)
 //
 
-static void list_connected_component(hash_table_t *hash_table,const char *word)
+static void list_connected_component(queue_l *queue, hash_table_t *hash_table,const char *word)
 {
   //
   // complete this
   //
+  unsigned int i;
+  hash_table_node_t *node;
+  int total_number_of_vertices;
+
+  node = find_word(hash_table,word,0);
+
+  put_node_queue(queue,node);
+
+  for(queue_node *qnode = queue->head; qnode != NULL; qnode = qnode->next){
+    hash_table_node_t *node = qnode->hash_node;
+    breadth_first_search(queue,node,NULL);
+  }
+
+  print_queue_items(queue);
+  printf("\n%u", queue->size);
+
 }
 
 
@@ -633,7 +647,7 @@ static int connected_component_diameter(hash_table_node_t *node)
   // complete this
   //
   return diameter;
-}*/
+}
 
 
 //
@@ -659,8 +673,7 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
 
   for(queue_node *node = queue->head;node != NULL;node = node->next){
     hash_table_node_t *hash_node = node->hash_node;
-    int aux = bfs(queue,hash_node,goal);
-    if(aux == 1) break;
+    if(breadth_first_search(queue,hash_node,goal)) break;
   }
   printf("\n");
 
@@ -669,7 +682,7 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
     printf("%s<-",goal->word);
   }
 
-  bfs_reset(hash_table);
+  breadth_first_search_reset(hash_table);
   delete_queue(queue);
 }
 
@@ -714,23 +727,6 @@ int main(int argc,char **argv)
   elapsed_time = cpu_time() - elapsed_time;
   fclose(fp);
 
-  // testando hash table -------------------
-  printf("\n\n\n");
-  int c = 0;
-  for(i = 0u; i < hash_table->hash_table_size; i++){
-    
-    if(hash_table->heads[i] != NULL){
-      //printf("%d", c++);
-      hash_table_node_t *node = hash_table->heads[i];
-      printf("%s %d", node->word, ++c);
-      node = node->next;
-      while(node != NULL){
-        printf("%s %d", node->word, ++c);
-        node = node->next;
-      }
-    }
-  }
-
   //print_hash_table_statistics(hash_table);
 
   // find all similar words
@@ -744,10 +740,14 @@ int main(int argc,char **argv)
     for(node = hash_table->heads[i];node != NULL;node = node->next){
       printf("\n\n\n %s", node->word);
       for(link = node->head; link != NULL; link = link->next)
+        //printf("\n%s", link->vertex->word);
         printf("\nnode: %s rep: %s", link->vertex->word, find_representative(link->vertex)->word);
     }
 
+  printf("\n\n");
   path_finder(hash_table,"moço","paço");
+  queue_l *queue = initialize_queue();
+  list_connected_component(queue,hash_table,"chão");
 
   /* graph_info(hash_table);
   // ask what to do
