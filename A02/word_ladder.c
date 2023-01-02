@@ -571,6 +571,15 @@ static void similar_words(hash_table_t *hash_table,hash_table_node_t *from)
 //
 // returns the number of vertices visited; if the last one is goal, following the previous links gives the shortest path between goal and origin
 //
+/* 
+static int breadh_first_search(int maximum_number_of_vertices,hash_table_node_t **list_of_vertices,hash_table_node_t *origin,hash_table_node_t *goal)
+{
+  //
+  // complete this
+  //
+  return -1;
+}
+*/
 static int breadth_first_search(queue_l *queue,hash_table_node_t *origin,hash_table_node_t *goal){
 
   //int number_of_vertices_visted = 0;
@@ -589,7 +598,7 @@ static int breadth_first_search(queue_l *queue,hash_table_node_t *origin,hash_ta
       if(vertex == goal) return 1;
     }
   }
-  return -1;
+  return -1; // deveria retornar o num de vertices visitados??
 }
 
 
