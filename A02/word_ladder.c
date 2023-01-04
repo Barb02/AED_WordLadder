@@ -781,7 +781,6 @@ int main(int argc,char **argv)
       similar_words(hash_table,node);
 
   printf("\n\n");
-<<<<<<< HEAD
   path_finder(hash_table,"chão","chio");
   list_connected_component(hash_table,"chão");
 
