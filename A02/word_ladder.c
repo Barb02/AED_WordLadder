@@ -267,7 +267,7 @@ static void hash_table_grow(hash_table_t *hash_table)
   hash_table_node_t *node,*next_node,*new_node_spot;
   unsigned int new_size = hash_table->hash_table_size * 2;
   hash_table_node_t **new_heads = (hash_table_node_t **)calloc(new_size,sizeof(hash_table_node_t*));
-  hash_table->nodes_per_head = (unsigned int *)calloc(new_size, sizeof(unsigned int));
+  unsigned int *new_nodes_per_head = (unsigned int *)calloc(new_size, sizeof(unsigned int));
   for(unsigned int i = 0u; i < new_size; i++){
     new_heads[i]= NULL;
   }
@@ -289,10 +289,12 @@ static void hash_table_grow(hash_table_t *hash_table)
         new_node_spot->next = node;
       }
       node = next_node;
-      hash_table->nodes_per_head[new_index] = hash_table->nodes_per_head[i];
+      new_nodes_per_head[new_index] = hash_table->nodes_per_head[i];
     }
   }
   free(hash_table->heads);
+  free(hash_table->nodes_per_head);
+  hash_table->nodes_per_head = new_nodes_per_head;
   hash_table->heads = new_heads;
   hash_table->hash_table_size = new_size;
 }
@@ -321,6 +323,7 @@ static void hash_table_free(hash_table_t *hash_table)
         free_hash_table_node(previousNode);
       }
     }
+  free(hash_table->nodes_per_head);
   free(hash_table->heads);
   free(hash_table);
 }
@@ -388,8 +391,8 @@ void print_hash_table_statistics(hash_table_t *hash_table)
   printf("\nnumber of collisions: %u", number_of_collisions);
   printf("\nmax linked list size: %u", max_linked_list_size);
   printf("\naverage linked list size: %f", (float)number_of_collisions/(float)hash_table->hash_table_size);
-  for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
-    printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]);
+  //for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
+    //printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]);
   printf("\nelapsed time dispended on adding all file elements to hash table: %.4f\n", elapsed_time);
   printf("\n----------------------------------------------------------------------------\n");
 }
@@ -401,7 +404,7 @@ void print_hash_table_statistics(hash_table_t *hash_table)
 
 static hash_table_node_t *find_representative(hash_table_node_t *node)
 {
-  hash_table_node_t *representative,*next_node;
+  hash_table_node_t *representative;
 
   //
   // complete this
@@ -444,6 +447,7 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
       from_links->next = link;
     }
     from->number_of_vertices++;
+
     // add link to node "to" 
     link = allocate_adjacency_node();
     link->next = NULL;
@@ -598,7 +602,7 @@ static int breadth_first_search(queue_l *queue,hash_table_node_t *origin,hash_ta
       if(vertex == goal) return 1;
     }
   }
-  return -1; // deveria retornar o num de vertices visitados??
+  return 0; // deveria retornar o num de vertices visitados??
 }
 
 
@@ -617,17 +621,17 @@ static void breadth_first_search_reset(hash_table_t *hash_table){
 // list all vertices belonging to a connected component (complete this)
 //
 
-static void list_connected_component(queue_l *queue, hash_table_t *hash_table,const char *word)
+static void list_connected_component(hash_table_t *hash_table,const char *word)
 {
   //
   // complete this
   //
-  unsigned int i;
+  queue_l *queue = initialize_queue();
   hash_table_node_t *node;
-  int total_number_of_vertices;
 
   node = find_word(hash_table,word,0);
 
+  node->visited = 1;
   put_node_queue(queue,node);
 
   for(queue_node *qnode = queue->head; qnode != NULL; qnode = qnode->next){
@@ -638,6 +642,8 @@ static void list_connected_component(queue_l *queue, hash_table_t *hash_table,co
   print_queue_items(queue);
   printf("\n%u", queue->size);
 
+  breadth_first_search_reset(hash_table);
+  delete_queue(queue);
 }
 
 
@@ -645,7 +651,7 @@ static void list_connected_component(queue_l *queue, hash_table_t *hash_table,co
 // compute the diameter of a connected component (optional)
 //
 
-static int largest_diameter;
+/* static int largest_diameter;
 static hash_table_node_t **largest_diameter_example;
 
 static int connected_component_diameter(hash_table_node_t *node)
@@ -656,7 +662,7 @@ static int connected_component_diameter(hash_table_node_t *node)
   // complete this
   //
   return diameter;
-}
+} */
 
 
 //
@@ -736,27 +742,16 @@ int main(int argc,char **argv)
   elapsed_time = cpu_time() - elapsed_time;
   fclose(fp);
 
-  //print_hash_table_statistics(hash_table);
+  print_hash_table_statistics(hash_table);
 
   // find all similar words
   for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
 
-  // testando add edge
-  adjacency_node_t *link;
-  for(i = 0u;i < hash_table->hash_table_size;i++)
-    for(node = hash_table->heads[i];node != NULL;node = node->next){
-      printf("\n\n\n %s", node->word);
-      for(link = node->head; link != NULL; link = link->next)
-        //printf("\n%s", link->vertex->word);
-        printf("\nnode: %s rep: %s", link->vertex->word, find_representative(link->vertex)->word);
-    }
-
   printf("\n\n");
-  path_finder(hash_table,"moço","paço");
-  queue_l *queue = initialize_queue();
-  list_connected_component(queue,hash_table,"chão");
+  path_finder(hash_table,"chão","chio");
+  list_connected_component(hash_table,"chão");
 
   /* graph_info(hash_table);
   // ask what to do
