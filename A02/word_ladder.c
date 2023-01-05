@@ -118,7 +118,7 @@ static queue_node *allocate_queue_node(){
   return node;
 }
 
-static void push_node_queue(queue_l *queue,hash_table_node_t *hash_node){
+static void enqueue(queue_l *queue,hash_table_node_t *hash_node){
   queue->size++;
   queue_node *q_node = allocate_queue_node();
   q_node->hash_node = hash_node;
@@ -133,7 +133,7 @@ static void push_node_queue(queue_l *queue,hash_table_node_t *hash_node){
   }
 }
 
-static hash_table_node_t *pop_node_queue(queue_l *queue){
+static hash_table_node_t *dequeue(queue_l *queue){
 
   hash_table_node_t *head_node = queue->head->hash_node;
   
@@ -605,13 +605,13 @@ static int breadh_first_search(hash_table_node_t *origin,hash_table_node_t *goal
   all_vertices = initialize_queue();
   hash_table_node_t *hash_node;
   hash_table_node_t *vertex = NULL;
-  push_node_queue(queue,origin);
-  push_node_queue(all_vertices,origin);
+  enqueue(queue,origin);
+  enqueue(all_vertices,origin);
   origin->visited = 1;
   
 
   while(queue->size > 0u){
-    hash_node = pop_node_queue(queue);
+    hash_node = dequeue(queue);
     if(hash_node == goal) break;
     for(adjacency_node_t *adj_node = hash_node->head; adj_node != NULL; adj_node = adj_node->next){
       vertex = adj_node->vertex;
@@ -621,8 +621,8 @@ static int breadh_first_search(hash_table_node_t *origin,hash_table_node_t *goal
       else{
         vertex->visited = 1;
         vertex->previous = hash_node;
-        push_node_queue(queue,vertex);
-        push_node_queue(all_vertices,vertex);
+        enqueue(queue,vertex);
+        enqueue(all_vertices,vertex);
       }
     }
   }
@@ -765,16 +765,6 @@ int main(int argc,char **argv)
   path_finder(hash_table,"veia","veis");
   printf("\n\n");
   list_connected_component(hash_table,"chio");
-
-  // testando queue pop
-  /* queue_l *queue = initialize_queue();
-  hash_table_node_t *nodetest = allocate_hash_table_node();
-  push_node_queue(queue,nodetest);
-  printf("%u\n", queue->size);
-  pop_node_queue(queue);
-  printf("%u\n", queue->size);
-  free(nodetest);
-  free(queue); */
 
   /* graph_info(hash_table);
   // ask what to do
