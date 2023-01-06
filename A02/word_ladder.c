@@ -166,7 +166,7 @@ static void print_queue_items(queue_l *queue){
     hash_table_node_t *hash_node = node->hash_node;
     printf("%s-",hash_node->word);
   }
-  printf("\n");
+  printf("\n\n");
 }
 //-----------------------------------------------------------------------------------
 
@@ -715,6 +715,7 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   for(; goal != NULL;goal = goal->previous){
     printf("%s<-",goal->word);
   }
+  printf("\n\n");
 
   // clear data
   breadth_first_search_reset(hash_table);
