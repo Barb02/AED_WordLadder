@@ -376,7 +376,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     new_node->previous = NULL;
     new_node->visited = 0;
     new_node->representative = new_node;
-    new_node->number_of_vertices = 0;
+    new_node->number_of_vertices = 1;
     new_node->number_of_edges = 0;
     strcpy(new_node->word,word);
     // link node to hash table
@@ -464,7 +464,6 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
         from_links = from_links->next;
       from_links->next = link;
     }
-    from->number_of_vertices++;
 
     // add link to node "to" 
     link = allocate_adjacency_node();
@@ -479,7 +478,6 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
         to_links = to_links->next;
       to_links->next = link;
     }
-    to->number_of_vertices++;
 
     // increment total number of edges
     hash_table->number_of_edges++;
@@ -489,14 +487,14 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
     // union
     if(from_representative != to_representative){
       if(to_representative->number_of_vertices > from_representative->number_of_vertices){
-        from->representative = to_representative;
         to->representative->number_of_vertices += from_representative->number_of_vertices;
         to->representative->number_of_edges += from_representative->number_of_edges;
+        from->representative = to_representative;
       }
       else{
-        to->representative = from_representative;
         from->representative->number_of_vertices += to_representative->number_of_vertices;
         from->representative->number_of_edges += to_representative->number_of_edges;
+        to->representative = from_representative;
       }
     }
   }
@@ -700,10 +698,20 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   goal = find_word(hash_table,to_word,0);
   if(goal == NULL) return;
 
+  // check if there is a possible path (if both are from same connected component)
+  /* printf("\n%s\n", find_representative(origin)->representative->word);
+  printf("\n%s\n", find_representative(goal)->representative->word);
+
+  if(find_representative(origin) != find_representative(goal)){
+    printf("\nThere is no path!\n\n");
+    return;
+  } */
+
   // breadth first search to find shortest path
   breadh_first_search(origin,goal);
 
   // print shortest path
+  printf("\nShortest path from %s to %s:\n", from_word, to_word);
   for(; goal != NULL;goal = goal->previous){
     printf("%s<-",goal->word);
   }
@@ -761,12 +769,12 @@ int main(int argc,char **argv)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
 
-  printf("\n\n");
+  /* printf("\n\n");
   path_finder(hash_table,"veia","veis");
   printf("\n\n");
-  list_connected_component(hash_table,"chio");
+  list_connected_component(hash_table,"chio"); */
 
-  /* graph_info(hash_table);
+  // graph_info(hash_table);
   // ask what to do
   for(;;)
   {
@@ -794,7 +802,7 @@ int main(int argc,char **argv)
     }
     else if(command == 3)
       break;
-  } */
+  } 
   // clean up
   hash_table_free(hash_table);
   return 0;
