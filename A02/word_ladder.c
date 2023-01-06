@@ -161,10 +161,10 @@ static void delete_queue(queue_l *queue){
 }
 
 static void print_queue_items(queue_l *queue){
-  printf("\n");
+  printf("\n- ");
   for(queue_node *node = queue->head;node != NULL;node = node->next){
     hash_table_node_t *hash_node = node->hash_node;
-    printf("%s-",hash_node->word);
+    printf(" %s -",hash_node->word);
   }
   printf("\n\n");
 }
@@ -609,7 +609,6 @@ static int breadh_first_search(hash_table_node_t *origin,hash_table_node_t *goal
   enqueue(queue,origin);
   enqueue(all_vertices,origin);
   origin->visited = 1;
-  
 
   while(queue->size > 0u){
     hash_node = dequeue(queue);
@@ -655,10 +654,18 @@ static void list_connected_component(hash_table_t *hash_table,const char *word)
   //
   hash_table_node_t *node;
 
+  // get node
   node = find_word(hash_table,word,0);
+  if(node == NULL){
+    printf("\n%s isn't on the list of words!\n\n",word);
+    return;
+  }
+
+  // print connected component
   printf("This connected component has the total of %u vertices, which are:\n", breadh_first_search(node,NULL));
   print_queue_items(all_vertices);
 
+  // clear data
   breadth_first_search_reset(hash_table);
   delete_queue(all_vertices);
 }
@@ -685,6 +692,12 @@ static int connected_component_diameter(hash_table_node_t *node)
 //
 // find the shortest path from a given word to another given word (to be done)
 //
+static void swapWordsOrder(char* str, const char* separator)
+{
+    int len = strlen(separator);
+    memmove(str + len, str, strlen(str) + 1);
+    memcpy(str, separator, len);
+}
 
 static void path_finder(hash_table_t *hash_table,const char *from_word,const char *to_word)
 {
@@ -693,17 +706,21 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   //
   hash_table_node_t *origin,*goal;
 
-  // get origin node 
+  // get origin and goal nodes 
   origin = find_word(hash_table,from_word,0);
-  if(origin == NULL) return;
-  origin->visited = 1;
-  // get goal node
   goal = find_word(hash_table,to_word,0);
-  if(goal == NULL) return;
+  if(origin == NULL){
+    printf("\n%s isn't on the list of words!\n\n",from_word);
+    return;
+  }
+  else if(goal == NULL){
+    printf("\n%s isn't on the list of words!\n\n",to_word);
+    return;
+  }
 
   // check if there is a possible path (if both are from same connected component)
 
-  if(find_representative(origin) != find_representative(goal)){
+  if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
     printf("\nThere is no path!\n\n");
     return;
   }
@@ -712,10 +729,20 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   breadh_first_search(origin,goal);
 
   // print shortest path
+  char shortestPath[1024] = "";
+  int firstWord = 1;
+
   printf("\nShortest path from %s to %s:\n", from_word, to_word);
-  for(; goal != NULL;goal = goal->previous){
-    printf("%s<-",goal->word);
+  
+  while(goal != NULL){
+    if(!firstWord) swapWordsOrder(shortestPath, " -> ");
+    swapWordsOrder(shortestPath, goal->word);
+    if(goal->word == origin->word) break;
+    goal = goal->previous;
+    firstWord = 0;
   }
+
+  printf("%s", shortestPath);
   printf("\n\n");
 
   // clear data
@@ -727,14 +754,15 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
 //
 // some graph information (optional)
 //
-/*
+
 static void graph_info(hash_table_t *hash_table)
 {
   //
   // complete this
   //
+
 }
- */
+
 
 //
 // main program
@@ -752,7 +780,7 @@ int main(int argc,char **argv)
   // initialize hash table
   hash_table = hash_table_create();
   // read words
-  fp = fopen((argc < 2) ? "wordlist-four-letters.txt" : argv[1],"rb");
+  fp = fopen((argc < 2) ? "wordlist-big-latest.txt" : argv[1],"rb");
   if(fp == NULL)
   {
     fprintf(stderr,"main: unable to open the words file\n");
@@ -770,11 +798,6 @@ int main(int argc,char **argv)
   for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
-
-  /* printf("\n\n");
-  path_finder(hash_table,"veia","veis");
-  printf("\n\n");
-  list_connected_component(hash_table,"chio"); */
 
   // graph_info(hash_table);
   // ask what to do
