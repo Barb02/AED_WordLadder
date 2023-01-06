@@ -422,21 +422,24 @@ void print_hash_table_statistics(hash_table_t *hash_table)
 
 static hash_table_node_t *find_representative(hash_table_node_t *node)
 {
-  hash_table_node_t *representative;
+  hash_table_node_t *representative, *next_node, *local_representative;
 
   //
   // complete this
   //
   representative = node->representative;
+  next_node = node;
   // find
-  while(node != representative){
-    node = node->representative;
-    representative = node->representative;
+  while(next_node != representative){  
+    next_node = next_node->representative;
+    representative = next_node->representative;
   }
   // path compression 
-  while(node != representative){
-    node = node->representative;
-    node->representative = representative;
+  next_node = node;
+  while(next_node->representative != representative){
+    local_representative = next_node->representative;
+    next_node->representative = representative;
+    next_node = local_representative;
   }
   return representative;
 }
@@ -699,13 +702,11 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
   if(goal == NULL) return;
 
   // check if there is a possible path (if both are from same connected component)
-  /* printf("\n%s\n", find_representative(origin)->representative->word);
-  printf("\n%s\n", find_representative(goal)->representative->word);
 
   if(find_representative(origin) != find_representative(goal)){
     printf("\nThere is no path!\n\n");
     return;
-  } */
+  }
 
   // breadth first search to find shortest path
   breadh_first_search(origin,goal);
