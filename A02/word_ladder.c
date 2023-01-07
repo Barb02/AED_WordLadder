@@ -491,12 +491,12 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
     if(from_representative != to_representative){
       if(to_representative->number_of_vertices > from_representative->number_of_vertices){
         to->representative->number_of_vertices += from_representative->number_of_vertices;
-        to->representative->number_of_edges += from_representative->number_of_edges;
+        to->representative->number_of_edges += from_representative->number_of_edges + 1; 
         from->representative = to_representative;
       }
       else{
         from->representative->number_of_vertices += to_representative->number_of_vertices;
-        from->representative->number_of_edges += to_representative->number_of_edges;
+        from->representative->number_of_edges += to_representative->number_of_edges + 1;
         to->representative = from_representative;
       }
     }
@@ -662,7 +662,7 @@ static void list_connected_component(hash_table_t *hash_table,const char *word)
   }
 
   // print connected component
-  printf("This connected component has the total of %u vertices, which are:\n", breadh_first_search(node,NULL));
+  printf("This connected component has the total of %d vertices, which are:\n", breadh_first_search(node,NULL));
   print_queue_items(all_vertices);
 
   // clear data
@@ -720,10 +720,10 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
 
   // check if there is a possible path (if both are from same connected component)
 
-  if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
+  /* if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
     printf("\nThere is no path!\n\n");
     return;
-  }
+  } */
 
   // breadth first search to find shortest path
   breadh_first_search(origin,goal);
@@ -760,7 +760,18 @@ static void graph_info(hash_table_t *hash_table)
   //
   // complete this
   //
-
+  hash_table_node_t *node;
+  printf("\n\n--------------------- Graph Statistical Data -------------------------\n");
+  printf("\nnumber of edges: %u\n",hash_table->number_of_edges);
+  for(unsigned int i=0u; i<hash_table->hash_table_size; i++){
+    node = hash_table->heads[i];
+    while(node != NULL){
+      printf("node: %8s representative: %8s number of vertices of connected component: %09d number of edges of connected component: %d\n", node->word, node->representative->word, node->representative->number_of_vertices, node->representative->number_of_edges);
+      node = node->next;
+    }
+  }
+  printf("\nelapsed time dispended on adding edges and performing union-find operations to the graph: %.4f\n", elapsed_time);
+  printf("\n----------------------------------------------------------------------------\n");
 }
 
 
@@ -786,20 +797,27 @@ int main(int argc,char **argv)
     fprintf(stderr,"main: unable to open the words file\n");
     exit(1);
   }
+
   elapsed_time = cpu_time();
+
   while(fscanf(fp,"%99s",word) == 1)
     (void)find_word(hash_table,word,1);
+
   elapsed_time = cpu_time() - elapsed_time;
   fclose(fp);
 
   //print_hash_table_statistics(hash_table);
 
   // find all similar words
+  elapsed_time = cpu_time();
+
   for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
       similar_words(hash_table,node);
 
-  // graph_info(hash_table);
+  elapsed_time = cpu_time() - elapsed_time;
+
+  graph_info(hash_table);
   // ask what to do
   for(;;)
   {
