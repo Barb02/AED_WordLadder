@@ -492,12 +492,12 @@ static void add_edge(hash_table_t *hash_table,hash_table_node_t *from,const char
       if(to_representative->number_of_vertices > from_representative->number_of_vertices){
         to->representative->number_of_vertices += from_representative->number_of_vertices;
         to->representative->number_of_edges += from_representative->number_of_edges + 1; 
-        from->representative = to_representative;
+        from->representative->representative = to_representative;
       }
       else{
         from->representative->number_of_vertices += to_representative->number_of_vertices;
         from->representative->number_of_edges += to_representative->number_of_edges + 1;
-        to->representative = from_representative;
+        to->representative->representative = from_representative;
       }
     }
   }
@@ -720,10 +720,10 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
 
   // check if there is a possible path (if both are from same connected component)
 
-  /* if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
+  if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
     printf("\nThere is no path!\n\n");
     return;
-  } */
+  }
 
   // breadth first search to find shortest path
   breadh_first_search(origin,goal);
@@ -760,13 +760,14 @@ static void graph_info(hash_table_t *hash_table)
   //
   // complete this
   //
-  hash_table_node_t *node;
+  hash_table_node_t *node, *rep;
   printf("\n\n--------------------- Graph Statistical Data -------------------------\n");
   printf("\nnumber of edges: %u\n",hash_table->number_of_edges);
   for(unsigned int i=0u; i<hash_table->hash_table_size; i++){
     node = hash_table->heads[i];
     while(node != NULL){
-      printf("node: %8s representative: %8s number of vertices of connected component: %09d number of edges of connected component: %d\n", node->word, node->representative->word, node->representative->number_of_vertices, node->representative->number_of_edges);
+      rep = find_representative(node);
+      printf("node: %-46s representative: %-46s \nnumber of vertices of connected component: %-d      number of edges of connected component: %-d\n", node->word, rep->word, rep->number_of_vertices, rep->number_of_edges);
       node = node->next;
     }
   }
