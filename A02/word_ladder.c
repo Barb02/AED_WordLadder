@@ -345,8 +345,8 @@ static void hash_table_free(hash_table_t *hash_table)
 }
 
 // variables to get statistical data about the hash table
+int number_of_resizes = 0;
 unsigned int number_of_collisions = 0u;
-unsigned int max_linked_list_size = 0u;
 double elapsed_time;
 
 static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,int insert_if_not_found)
@@ -393,25 +393,26 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
     // updtae number of entries
     hash_table->number_of_entries++;
   }
-  // save max linked list size
-  if(size_linked_list > max_linked_list_size) max_linked_list_size = size_linked_list;
   // resize hash table
-  if(hash_table->number_of_entries >= hash_table->hash_table_size*0.7) hash_table_grow(hash_table);
+  if(hash_table->number_of_entries >= hash_table->hash_table_size*0.7){
+    hash_table_grow(hash_table);
+    number_of_resizes++;
+  } 
   return node;
 }
 
 
 void print_hash_table_statistics(hash_table_t *hash_table)
 {
+  /* for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
+    printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]); */
   printf("\n\n--------------------- Hash Table Statistical Data -------------------------\n");
   printf("\nnumber of entries: %u",hash_table->number_of_entries);
   printf("\nsize: %u", hash_table->hash_table_size);
+  printf("\nnumber of resizes: %d", number_of_resizes);
   printf("\nnumber of collisions: %u", number_of_collisions);
-  printf("\nmax linked list size: %u", max_linked_list_size);
-  printf("\naverage linked list size: %f", (float)number_of_collisions/(float)hash_table->hash_table_size);
-  //for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
-    //printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]);
-  printf("\nelapsed time dispended on adding all file elements to hash table: %.4f\n", elapsed_time);
+  printf("\naverage linked list size: %f", (float)hash_table->number_of_entries/(float)hash_table->hash_table_size);
+  printf("\nelapsed time dispended on adding all nodes to hash table: %.4f\n", elapsed_time);
   printf("\n----------------------------------------------------------------------------\n");
 }
 
@@ -807,7 +808,7 @@ int main(int argc,char **argv)
   elapsed_time = cpu_time() - elapsed_time;
   fclose(fp);
 
-  //print_hash_table_statistics(hash_table);
+  print_hash_table_statistics(hash_table);
 
   // find all similar words
   elapsed_time = cpu_time();
