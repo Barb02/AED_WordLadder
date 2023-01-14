@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../P02/elapsed_time.h"
+#define  PRINT_ALL_WORDS 0
 
 
 //
@@ -721,7 +722,7 @@ static void path_finder(hash_table_t *hash_table,const char *from_word,const cha
 
   // check if there is a possible path (if both are from same connected component)
 
-  if(find_representative(origin) != find_representative(goal) || strlen(from_word)!=strlen(to_word)){
+  if(find_representative(origin) != find_representative(goal)){
     printf("\nThere is no path!\n\n");
     return;
   }
@@ -761,9 +762,10 @@ static void graph_info(hash_table_t *hash_table)
   //
   // complete this
   //
-  hash_table_node_t *node, *rep;
   printf("\n\n--------------------- Graph Statistical Data -------------------------\n");
   printf("\nnumber of edges: %u\n",hash_table->number_of_edges);
+  #if PRINT_ALL_WORDS
+  hash_table_node_t *node, *rep;
   for(unsigned int i=0u; i<hash_table->hash_table_size; i++){
     node = hash_table->heads[i];
     while(node != NULL){
@@ -772,6 +774,7 @@ static void graph_info(hash_table_t *hash_table)
       node = node->next;
     }
   }
+  #endif
   printf("\nelapsed time dispended on adding edges and performing union-find operations to the graph: %.4f\n", elapsed_time);
   printf("\n----------------------------------------------------------------------------\n");
 }
