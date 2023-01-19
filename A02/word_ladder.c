@@ -405,8 +405,6 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
 
 void print_hash_table_statistics(hash_table_t *hash_table)
 {
-  /* for(unsigned int i=0u; i<hash_table->hash_table_size; i++)
-    printf("\nhashcode: %d nodes mapped: %u", i, hash_table->nodes_per_head[i]); */
   printf("\n\n--------------------- Hash Table Statistical Data -------------------------\n");
   printf("\nnumber of entries: %u",hash_table->number_of_entries);
   printf("\nsize: %u", hash_table->hash_table_size);
